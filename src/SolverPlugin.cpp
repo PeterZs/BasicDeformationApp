@@ -16,7 +16,8 @@
 #include <igl/unproject_onto_mesh.h>
 
 SolverPlugin::SolverPlugin()
-	: solver_wrapper(make_unique<SolverWrapper>())
+	: solver(make_unique<Newton>()), totalObjective(make_shared<TotalObjective>())
+
 {
 	C << 0.0, 1.0, 0.0;
 	C_hover << 0.854902, 0.647059, 0.12549;
@@ -28,14 +29,17 @@ SolverPlugin::SolverPlugin()
 	black << 0., 0., 0.;
 }
 
-
 void SolverPlugin::init(Viewer *viewer)
 {
 	leftView = 0;
 	viewer->core->background_color << 1., 1., 1., 1.; // 0.25, 0.25, 0.25, 1.0;
 	viewer->core->orthographic = true;
 	viewer->core->viewport = Eigen::Vector4f(0, 0, 960, 1080);
+	viewer->core->rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
+	
 	rightView = viewer->append_core(Eigen::Vector4f(960, 0, 960, 1080));
+	viewer->core_list[rightView].rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
+
 
 	this->viewer = viewer;
 	viewer->plugins.push_back(&menu);
@@ -79,7 +83,7 @@ void SolverPlugin::init(Viewer *viewer)
 
 bool SolverPlugin::load(string filename)
 {
-	if (solver_wrapper->solver->is_running)
+	if (solver->is_running)
 		stop_solver_thread();
 
 	bool read_obj = false;
@@ -121,39 +125,43 @@ bool SolverPlugin::load(string filename)
 
 void SolverPlugin::initialize()
 {
-	if (solver_wrapper->solver->is_running)
-		solver_wrapper->solver->stop();
+	if (solver->is_running)
+		solver->stop();
 
-	while (solver_wrapper->solver->is_running);
+	while (solver->is_running);
 
 	if (V.rows() == 0 || F.rows() == 0)
 		return;
 
-	solver_wrapper->init(V, F);
+	// initialize the energy
+	totalObjective->symDirichlet->V = V.leftCols(2);
+	totalObjective->symDirichlet->F = F;
+	totalObjective->init();
+	// initialize the solver
+	solver->init(totalObjective,Map<const VectorXd>(V.data(),V.rows()*2));
 
-	if (uv_id != 0) {
-		viewer->data_list[uv_id].clear();
-		viewer->data_list[mesh_id].clear();
+	if (processed_mesh_id != 0) {
+		viewer->data_list[processed_mesh_id].clear();
+		viewer->data_list[source_mesh_id].clear();
 	}
 	else
 	{
-		uv_id = viewer->append_mesh();
+		processed_mesh_id = viewer->append_mesh();
 	}
-	viewer->data_list[mesh_id].set_mesh(V, F);
-	viewer->data_list[mesh_id].set_uv(solver_wrapper->solver->Vdef);
-	viewer->data_list[uv_id].set_mesh(solver_wrapper->solver->Vdef, solver_wrapper->solver->F);
+	viewer->data_list[source_mesh_id].set_mesh(V, F);
+	viewer->data_list[source_mesh_id].set_uv(V);
+	viewer->data_list[processed_mesh_id].set_mesh(V, F);
 
 	RGBColors = V;
 	RGBColors.rowwise() -= RGBColors.colwise().minCoeff();
 	RGBColors *= RGBColors.colwise().maxCoeff().cwiseInverse().asDiagonal();
 
-	viewer->data_list[uv_id].F;
-	viewer->data_list[uv_id].set_colors(Eigen::MatrixX3d::Ones(solver_wrapper->solver->F.rows(), 3));
+	viewer->data_list[processed_mesh_id].F;
+	viewer->data_list[processed_mesh_id].set_colors(Eigen::MatrixX3d::Ones(F.rows(), 3));
 
-	// init colors of uv mesh
-	uv_triangle_colors = Eigen::MatrixX3d::Ones(solver_wrapper->solver->F.rows(), 3);
-
-	viewer->data_list[mesh_id].set_colors(RVec3(1., 1., 1.));
+	// init colors of deformed mesh
+	uv_triangle_colors = Eigen::MatrixX3d::Ones(F.rows(), 3);
+	viewer->data_list[source_mesh_id].set_colors(RVec3(1., 1., 1.));
 }
 
 void SolverPlugin::export_uv_to_obj()
@@ -161,63 +169,10 @@ void SolverPlugin::export_uv_to_obj()
 
 }
 
-// void SolverPlugin::add_texture_slider(nanogui::Window* window, double& var, const string& name)
-// {
-// 	Widget *panel = new Widget(window);
-// 	panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Middle, 0, 20));
-// 
-// 	Slider* s = new Slider(panel);
-// 	s->setValue(var);
-// 
-// 	TextBox *textBox = new TextBox(panel);
-// 	textBox->setValue(removeTrailingZeros(to_string(round(100 * max_texture_val * var) / 100)));
-// 	textBox->setFixedWidth(50);
-// 	textBox->setEditable(false);
-// 	textBox->setFixedHeight(18);
-// 
-// 	s->setCallback([&, textBox](float value)
-// 	{
-// 		textBox->setValue(removeTrailingZeros(to_string(round(100 * max_texture_val * value) / 100)));
-// 		var = max_texture_val * value;
-// 		update_colors = true;
-// 	});
-// 
-// 	var *= max_texture_val;
-// 
-// 	viewer->ngui->addWidget(name, panel);
-// }
-// 
-// void SolverPlugin::add_color_clamp_slider(const string& name, const shared_ptr<double>& max_value, const shared_ptr<double>& value)
-// {
-// 	Widget *panel = new Widget(bar->window());
-// 	panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Middle, 0, 20));
-// 
-// 	Slider* s = new Slider(panel);
-// 	s->setValue(*value);
-// 
-// 	TextBox *textBox = new TextBox(panel);
-// 	textBox->setValue(removeTrailingZeros(to_string(*value)));
-// 	textBox->setFixedWidth(50);
-// 	textBox->setEditable(false);
-// 	textBox->setFixedHeight(18);
-// 
-// 	s->setCallback([&, textBox](float new_value) {
-// 		textBox->setValue(removeTrailingZeros(to_string(round(100 * new_value* *max_value) / 100)));
-// 		*value = new_value * *max_value;
-// 		update_colors = true;
-// 	});
-// 
-// 	viewer->ngui->addWidget(name, panel);
-// }
-// 
-// inline string SolverPlugin::removeTrailingZeros(string s) {
-// 	return s.erase(s.find_last_not_of('0') + 1, string::npos);
-// }
-
 void SolverPlugin::start_solver_thread()
 {
 	cout << "start new solver" << endl;
-	solver_thread = thread(&Solver::run, solver_wrapper->solver.get());
+	solver_thread = thread(&Solver::run, solver.get());
 	solver_thread.detach();
 }
 
@@ -232,7 +187,7 @@ bool SolverPlugin::key_down(int key, int modifiers)
 	{
 	case GLFW_KEY_T:
 		// toggle texturing
-		viewer->data_list[mesh_id].show_texture = !viewer->data_list[mesh_id].show_texture;
+		viewer->data_list[source_mesh_id].show_texture = !viewer->data_list[source_mesh_id].show_texture;
 		return true; // dont trigger fill variable
 	}
 	return false;
@@ -245,20 +200,21 @@ bool SolverPlugin::key_up(int key, int modifiers)
 
 bool SolverPlugin::pre_draw()
 {
-	if (solver_wrapper->progressed() || update_colors)
+	if (solver->progressed || update_colors)
 		update_mesh();
 	return false;
 }
 
 void SolverPlugin::update_mesh()
 {
-	Eigen::MatrixX2d newX;
-	solver_wrapper->solver->get_mesh(newX);
-	viewer->data_list[uv_id].set_mesh(newX, solver_wrapper->solver->F);
+	Eigen::VectorXd X;
+	solver->get_data(X);
+	Map<MatrixX2d> V(X.data(), X.rows()/2, 2);
+	viewer->data_list[processed_mesh_id].set_vertices(V);
 
 	// set UV of 3d mesh with newX vertices
 	// prepare first for 3d mesh soup
-	viewer->data_list[mesh_id].set_uv(texture_size * newX);
+	viewer->data_list[source_mesh_id].set_uv(texture_size * V);
 
 
 	if (colorByRGB)
@@ -276,7 +232,7 @@ void SolverPlugin::update_mesh()
 	Eigen::MatrixX3d uv_dist_colors = Eigen::MatrixX3d::Ones(uv_triangle_colors.rows(), 3);
 	if (show_distortion_error)
 	{
-		Vec dist_vals = solver_wrapper->solver->energy->symDirichlet->Efi;
+		Vec dist_vals = totalObjective->symDirichlet->Efi;
 
 		// new dist color impl
 		Vec dist_err = dist_vals.transpose().array() - 4.;
@@ -300,7 +256,7 @@ void SolverPlugin::update_mesh()
 	if (hovered_triangle != -1)
 	{
 		// uv
-		face = solver_wrapper->solver->F.row(hovered_triangle);
+		face = solver->F.row(hovered_triangle);
 		uv_triangle_colors.row(face(0)) << C_hover;
 		uv_triangle_colors.row(face(1)) << C_hover;
 		uv_triangle_colors.row(face(2)) << C_hover;
@@ -309,13 +265,13 @@ void SolverPlugin::update_mesh()
 	}
 
 
-	viewer->data_list[uv_id].points.resize(0, Eigen::NoChange);
+	viewer->data_list[processed_mesh_id].points.resize(0, Eigen::NoChange);
 
-	viewer->data_list[uv_id].set_colors(uv_triangle_colors);
-	viewer->data_list[mesh_id].set_colors(uv_triangle_colors);
+	viewer->data_list[processed_mesh_id].set_colors(uv_triangle_colors);
+	viewer->data_list[source_mesh_id].set_colors(uv_triangle_colors);
 
-	viewer->data_list[uv_id].dirty |= igl::opengl::MeshGL::DIRTY_AMBIENT;
-	viewer->data_list[mesh_id].dirty |= igl::opengl::MeshGL::DIRTY_AMBIENT;
+	viewer->data_list[processed_mesh_id].dirty |= igl::opengl::MeshGL::DIRTY_AMBIENT;
+	viewer->data_list[source_mesh_id].dirty |= igl::opengl::MeshGL::DIRTY_AMBIENT;
 
 	update_colors = false;
 }

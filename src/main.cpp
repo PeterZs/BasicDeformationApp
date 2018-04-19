@@ -3,7 +3,7 @@
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
 #include <imgui/imgui.h>
 #include "SolverPlugin.h"
-#include "Energy.h"
+#include "TotalObjective.h"
 
 using namespace std;
 using namespace igl::opengl::glfw;

@@ -7,16 +7,12 @@ Newton::Newton() {}
 
 int Newton::step()
 {
-	eval_fgh(m_x, f, g, h);
+	objective->updateX(m_x);
+	f = objective->value();
+	objective->gradient(g);
+	objective->hessian();
 
- 	SSd = energy->symDirichlet->SS;
-
-// 	SSp = energy->position->SS; //TBD
-
-	SS.clear();
-	SS.insert(SS.end(), SSd.begin(), SSd.end());
-// 	SS.insert(SS.end(), SSp.begin(), SSp.end());
-	pardiso->update_a(SS);
+	pardiso->update_a(objective->SS);
 	try
 	{
 		pardiso->factorize();
@@ -45,36 +41,18 @@ void Newton::internal_init()
 		pardiso = make_unique<PardisoSolver<vector<int>, vector<double>>>();
 		pardiso->set_type(2, true);
 	}
-
-	eval_fgh(m_x, f, g, h);
-
-	IId = energy->symDirichlet->II;
-	JJd = energy->symDirichlet->JJ;
-	SSd = energy->symDirichlet->SS;
-
-// 	IIp = energy->position->II;
-// 	JJp = energy->position->JJ;
-// 	SSp = energy->position->SS;
-
+	
+	objective->updateX(m_x);
+	objective->hessian();
 
 	if (needs_init)
 	{ 
-		// find pattern for initialization
-		II.insert(II.end(), IId.begin(), IId.end());
-// 		II.insert(II.end(), IIp.begin(), IIp.end());
-
-		JJ.insert(JJ.end(), JJd.begin(), JJd.end());
-// 		JJ.insert(JJ.end(), JJp.begin(), JJp.end());
-
-		SS.insert(SS.end(), SSd.begin(), SSd.end());
-// 		SS.insert(SS.end(), SSp.begin(), SSp.end());
-
-		pardiso->set_pattern(II, JJ, SS);
+		pardiso->set_pattern(objective->II, objective->JJ, objective->SS);
 		pardiso->analyze_pattern();
 	}
 }
 
-void Newton::internal_update_external_mesh()
+void Newton::internal_update_external_data()
 {
 	diff_norm = (ext_x - m_x).norm();
 	ext_x = m_x;
@@ -95,6 +73,7 @@ double Newton::eval_ls(Eigen::MatrixXd& x)
 	Vec g;
 	SpMat h;
 	Vec vec_x = Eigen::Map<Vec>(x.data(), x.rows()  * x.cols(), 1);
-	eval_f(vec_x, f);
+	objective->updateX(vec_x);
+	f=objective->value();
 	return f;
 }

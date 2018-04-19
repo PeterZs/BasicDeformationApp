@@ -51,7 +51,11 @@ void DistortionSymDir::init()
 
 	Eigen::MatrixX3d D1cols, D2cols;
 
-	Utils::computeSurfaceGradientPerFace(V, F, D1cols, D2cols);
+	Eigen::MatrixX3d V3d; 
+	V3d.resize(V.rows(), 3);
+	V3d.leftCols(2) = V;
+	V3d.col(2).setZero();
+	Utils::computeSurfaceGradientPerFace(V3d, F, D1cols, D2cols);
 	D1d=D1cols.transpose();
 	D2d=D2cols.transpose();
 
@@ -255,7 +259,7 @@ inline Mat6 DistortionSymDir::ComputeConvexConcaveFaceHessian(const Vec6& a1, co
 
 void DistortionSymDir::prepare_hessian()
 {
-	int n = numV/2;
+	int n = numV;
 
 	II.clear();
 	JJ.clear();

@@ -18,7 +18,7 @@ public:
 	void linesearch();
 	bool test_progress();
 	void internal_init();
-	void internal_update_external_mesh();
+	void internal_update_external_data();
 
 private:
 	// Wrapper function for flip_avoiding_line_search

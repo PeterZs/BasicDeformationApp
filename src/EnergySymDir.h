@@ -27,7 +27,7 @@ public:
 	/****************************************************************************************************************************/
 	double bound=0;
 	Eigen::MatrixX3i F;
-	Eigen::MatrixX3d V;
+	Eigen::MatrixX2d V;
 
 	int numV;
 	int numE;
