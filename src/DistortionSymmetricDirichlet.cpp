@@ -134,7 +134,7 @@ void DistortionSymmetricDirichlet::hessian()
 	//anti similarity beta
 	Eigen::VectorXd cY = 0.5*(a - d);
 	Eigen::VectorXd dY = 0.5*(b + c);
-#pragma omp parallel for num_threads(24)
+// #pragma omp parallel for num_threads(24)
 	for (int i = 0; i < numF; ++i) {
 		//vectors of size 6
 		//svd derivatives

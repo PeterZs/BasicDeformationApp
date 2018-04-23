@@ -31,6 +31,7 @@ void ConstraintsPositional::gradient(Eigen::VectorXd& g)
 {
 	MatrixXd diff = (CurrConstrainedVerticesPos - ConstrainedVerticesPos);
 	g.conservativeResize(numV * 2);
+	g.setZero();
 	for (int i = 0; i < ConstrainedVerticesInd.size(); i++)
 	{
 		g(ConstrainedVerticesInd[i]) = 2*diff(i, 0);
@@ -43,7 +44,7 @@ void ConstraintsPositional::hessian()
 	std::fill(SS.begin(), SS.end(), 0);
 	for (int i = 0; i < ConstrainedVerticesInd.size(); i++)
 	{
-		SS[i] = 2; SS[i + numV] = 2;
+		SS[ConstrainedVerticesInd[i]] = 2; SS[ConstrainedVerticesInd[i] + numV] = 2;
 	}
 }
 

@@ -143,7 +143,7 @@ void SolverPlugin::initialize()
 	// initialize the solver
 	VectorXd XX = Map<const VectorXd>(V.data(), V.rows() * 2);
 	solver->init(totalObjective, XX);
-//	solver->init(totalObjective,XX+0.1*VectorXd::Random(6));
+// 	solver->init(totalObjective,XX+0.1*VectorXd::Random(6));
 	solver->setFlipAvoidingLineSearch(F);
 
 	if (processed_mesh_id != 0) {
