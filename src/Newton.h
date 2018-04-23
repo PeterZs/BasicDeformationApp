@@ -14,16 +14,11 @@ class Newton : public Solver
 public:
 	Newton();
 
-	int step();
-	void linesearch();
+	double step();
 	bool test_progress();
 	void internal_init();
-	void internal_update_external_data();
 
 private:
-	// Wrapper function for flip_avoiding_line_search
-	double eval_ls(Eigen::MatrixXd& x);
-
 	// norm of the progress on the mesh
 	double diff_norm;
 

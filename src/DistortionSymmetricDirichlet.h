@@ -7,14 +7,14 @@
 #include <Eigen/Sparse>
 #include "ObjectiveFunction.h"
 
-class DistortionSymDir : public ObjectiveFunction
+class DistortionSymmetricDirichlet : public ObjectiveFunction
 {
 
 public:
 
 	/**************************************************************************************************************************/
 	//INITIALIZATION 
-	DistortionSymDir();
+	DistortionSymmetricDirichlet();
 
 	virtual void init();
 	virtual void updateX(const VectorXd& X);

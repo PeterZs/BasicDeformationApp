@@ -31,9 +31,14 @@ public:
 	void initialize();
 	
 	bool mouse_move(int mouse_x, int mouse_y);
+	void MoveHandle(int mouse_x, int mouse_y);
 	bool process_mouse_move();
 
 	bool mouse_down(int button, int modifier);
+
+	void RemoveHandle(int index);
+
+	void AddHandle(int &vid);
 	bool mouse_up(int button, int modifier);
 	bool mouse_scroll(float delta_y);
 	
@@ -119,6 +124,11 @@ private:
 
 	int rightView;
 	int leftView;
+	int FindHitVertex();
+	int FindHitHandle();
+	int selectedHandle=-1;
+	std::vector<int>& HandlesInd; //reference to indices in constraitPositional
+	MatrixX2d& HandlesPos; //reference to positions in constraitPositional
 };
 
 #endif

@@ -16,6 +16,8 @@ public:
 	virtual void hessian() = 0;
 
 	virtual void prepare_hessian() = 0;
+	double w;
+
 	// pardiso variables
 	std::vector<int> II, JJ;
 	std::vector<double> SS;

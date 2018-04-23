@@ -1,4 +1,4 @@
-#include "EnergySymDir.h"
+#include "DistortionSymmetricDirichlet.h"
 #include <limits>
 
 typedef Eigen::Triplet<double> T;
@@ -12,13 +12,13 @@ typedef Eigen::Matrix<double, 6, 1> Vector6d;
 using namespace std;
 using namespace Eigen;
 
-DistortionSymDir::DistortionSymDir()
+DistortionSymmetricDirichlet::DistortionSymmetricDirichlet()
 {
 }
-void DistortionSymDir::init()
+void DistortionSymmetricDirichlet::init()
 {
 	if (V.size() == 0 || F.size() == 0)
-		throw "DistortionSymDir must define members V,F before init()!";
+		throw "DistortionSymmetricDirichlet must define members V,F before init()!";
 		
 	numF = F.rows();
 	numV = V.rows();
@@ -79,13 +79,14 @@ void DistortionSymDir::init()
 
 	Hi.resize(numF);
 	prepare_hessian();
+	w = 1;
 }
-void DistortionSymDir::updateX(const VectorXd& X)
+void DistortionSymmetricDirichlet::updateX(const VectorXd& X)
 {
 	bool inversions_exist = updateJ(X);
 }
 
-double DistortionSymDir::value()
+double DistortionSymmetricDirichlet::value()
 {
 	// E = ||J||^2+||J^-1||^2 = ||J||^2+||J||^2/det(J)^2
 	Eigen::VectorXd dirichlet = a.cwiseAbs2() + b.cwiseAbs2() + c.cwiseAbs2() + d.cwiseAbs2();
@@ -95,7 +96,7 @@ double DistortionSymDir::value()
 	double f = 0.5*(Area.asDiagonal()*Efi).sum();
 	return f;
 }
-void DistortionSymDir::gradient(Vec& g)
+void DistortionSymmetricDirichlet::gradient(Vec& g)
 {
 	UpdateSSVDFunction();
 	
@@ -117,7 +118,7 @@ void DistortionSymDir::gradient(Vec& g)
 	}
 }
 
-void DistortionSymDir::hessian()
+void DistortionSymmetricDirichlet::hessian()
 {
 	auto lambda1 = [](double a) {return a - 1.0 / (a*a*a); };
 	//gradient of outer function in composition
@@ -172,7 +173,7 @@ void DistortionSymDir::hessian()
 	}
 }
 
-bool DistortionSymDir::updateJ(const VectorXd& X)
+bool DistortionSymmetricDirichlet::updateJ(const VectorXd& X)
 {
 	Eigen::Map<const MatrixX2d> x(X.data(), X.size() / 2, 2);
 // 	a = D1*U;
@@ -193,7 +194,7 @@ bool DistortionSymDir::updateJ(const VectorXd& X)
 
 	return ((detJuv.array() < 0).any());
 };
-void DistortionSymDir::UpdateSSVDFunction()
+void DistortionSymmetricDirichlet::UpdateSSVDFunction()
 {
 
 #pragma omp parallel for num_threads(24)
@@ -208,7 +209,7 @@ void DistortionSymDir::UpdateSSVDFunction()
 		s.row(i) << S(0), S(3);
 	}
 }
-void DistortionSymDir::ComputeDenseSSVDDerivatives()
+void DistortionSymmetricDirichlet::ComputeDenseSSVDDerivatives()
 {
 	//different columns belong to diferent faces
 	Eigen::MatrixXd B(D1d*v.col(0).asDiagonal() + D2d*v.col(1).asDiagonal());
@@ -224,7 +225,7 @@ void DistortionSymDir::ComputeDenseSSVDDerivatives()
 	Dsd[1].bottomRows(t1.rows()) = t2;
 }
 
-inline Eigen::Matrix<double, 6, 6> DistortionSymDir::ComputeFaceConeHessian(const Eigen::Matrix<double, 6, 1> A1, const Eigen::Matrix<double, 6, 1>& A2, double a1x, double a2x)
+inline Eigen::Matrix<double, 6, 6> DistortionSymmetricDirichlet::ComputeFaceConeHessian(const Eigen::Matrix<double, 6, 1> A1, const Eigen::Matrix<double, 6, 1>& A2, double a1x, double a2x)
 {
 	double f2 = a1x*a1x + a2x*a2x;
 	double invf = 1.0/sqrt(f2);
@@ -242,7 +243,7 @@ inline Eigen::Matrix<double, 6, 6> DistortionSymDir::ComputeFaceConeHessian(cons
 
 	return  (invf - invf3*a2) * A1A1t + (invf - invf3*b2) * A2A2t - invf3 * ab*(A1A2t + A2A1t);
 }
-inline Mat6 DistortionSymDir::ComputeConvexConcaveFaceHessian(const Vec6& a1, const Vec6& a2, const Vec6& b1, const Vec6& b2, double aY, double bY, double cY, double dY, const Vec6& dSi, const Vec6& dsi, double gradfS, double gradfs, double HS, double Hs)
+inline Mat6 DistortionSymmetricDirichlet::ComputeConvexConcaveFaceHessian(const Vec6& a1, const Vec6& a2, const Vec6& b1, const Vec6& b2, double aY, double bY, double cY, double dY, const Vec6& dSi, const Vec6& dsi, double gradfS, double gradfs, double HS, double Hs)
 {
 	//no multiplying by area in this function
 
@@ -257,7 +258,7 @@ inline Mat6 DistortionSymDir::ComputeConvexConcaveFaceHessian(const Vec6& a1, co
 	return H;
 }
 
-void DistortionSymDir::prepare_hessian()
+void DistortionSymmetricDirichlet::prepare_hessian()
 {
 	int n = numV;
 
