@@ -56,7 +56,6 @@ protected:
 	atomic_bool a_parameter_was_updated = {false};
 	atomic_bool halt = {false};
 	
-	// Mutex needed in lbfgs - thus protected
 	unique_ptr<shared_timed_mutex> data_mutex;
 
 	// pardiso variables

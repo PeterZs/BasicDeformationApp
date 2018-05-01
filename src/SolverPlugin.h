@@ -24,6 +24,7 @@ class SolverPlugin : public ViewerPlugin
 public:
 	SolverPlugin();
 	void init(Viewer *viewer);
+	void post_resize(int w, int h); // external resize due to user interaction
 
 	bool load(string filename);
 	void export_uv_to_obj();

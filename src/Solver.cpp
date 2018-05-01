@@ -48,8 +48,7 @@ int Solver::run()
 
 void Solver::linesearch()
 {
-	auto MatX = Eigen::Map<Eigen::MatrixX2d>(X.data(), X.rows() / 2, 2);
-	auto MatP = Eigen::Map<const Eigen::MatrixX2d>(p.data(), p.rows() / 2, 2);
+
 
 	double step_size;
 	auto funcation_evaluator = [this](MatrixXd& x) {
@@ -58,8 +57,9 @@ void Solver::linesearch()
 	};
 	if (FlipAvoidingLineSearch)
 	{
-		MatrixXd MapT = MatX;
-		double min_step_to_singularity = igl::flip_avoiding::compute_max_step_from_singularities(MatX, F, MapT);
+		auto MatX = Eigen::Map<Eigen::MatrixX2d>(X.data(), X.rows() / 2, 2);
+		MatrixXd MatP = Eigen::Map<const Eigen::MatrixX2d>(p.data(), p.rows() / 2, 2);
+		double min_step_to_singularity = igl::flip_avoiding::compute_max_step_from_singularities(MatX, F, MatP);
 		step_size = std::min(1., min_step_to_singularity*0.8);
 	}
 	else

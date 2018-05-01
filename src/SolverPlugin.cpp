@@ -33,10 +33,10 @@ SolverPlugin::SolverPlugin()
 void SolverPlugin::init(Viewer *viewer)
 {
 	leftView = 0;
-	viewer->core->background_color << 1., 1., 1., 1.; // 0.25, 0.25, 0.25, 1.0;
-	viewer->core->orthographic = true;
-	viewer->core->viewport = Eigen::Vector4f(0, 0, 960, 1080);
-	viewer->core->rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
+	viewer->core().background_color << 1., 1., 1., 1.; // 0.25, 0.25, 0.25, 1.0;
+	viewer->core().orthographic = true;
+	viewer->core().viewport = Eigen::Vector4f(0, 0, 960, 1080);
+	viewer->core().rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
 	
 	rightView = viewer->append_core(Eigen::Vector4f(960, 0, 960, 1080));
 	viewer->core_list[rightView].rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
@@ -77,9 +77,18 @@ void SolverPlugin::init(Viewer *viewer)
 		ImGui::End();
 	};
 
-	viewer->core->is_animating = true;
-	viewer->core->animation_max_fps = 30.0;
+	viewer->core().is_animating = true;
+	viewer->core().animation_max_fps = 30.0;
 // 	viewer->data.object_scale = 10.0;
+}
+
+void SolverPlugin::post_resize(int w, int h)
+{
+	if (viewer)
+	{
+		viewer->core_list[leftView].viewport = Eigen::Vector4f(0, 0, w / 2, h);
+		viewer->core_list[rightView].viewport = Eigen::Vector4f(w / 2 + 1, 0, w / 2, h);
+	}
 }
 
 bool SolverPlugin::load(string filename)
@@ -266,9 +275,9 @@ int SolverPlugin::FindHitVertex()
 	Eigen::Vector3f BC;
 	// Cast a ray in the view direction starting from the mouse position
 	double x = viewer->current_mouse_x;
-	double y = viewer->core->viewport(3) - viewer->current_mouse_y;
-	igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core->view * viewer->core->model,
-		viewer->core->proj, viewer->core->viewport, V, F, fid, BC);
+	double y = viewer->core().viewport(3) - viewer->current_mouse_y;
+	igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view * viewer->core().model,
+		viewer->core().proj, viewer->core().viewport, V, F, fid, BC);
 	int maxBCind;
 	double maxBc = BC.maxCoeff(&maxBCind);
 	return F(fid, maxBCind);
@@ -279,7 +288,7 @@ int SolverPlugin::FindHitHandle()
 	int handleIndex=-1;
 	auto &ind = totalObjective->constraintsPositional.ConstrainedVerticesInd;
 	Vector3f m = Vector3f(viewer->current_mouse_x, viewer->current_mouse_y, 0);
-	m[1] = viewer->core->viewport[3] - m[1];
+	m[1] = viewer->core().viewport[3] - m[1];
 	// find handle
 	float min = std::numeric_limits<float>::max();
 	for (int i = 0; i < ind.size(); i++)
@@ -287,7 +296,7 @@ int SolverPlugin::FindHitHandle()
 		Vector3f hi;
 		// << HandlesPos.row(i).cast<float>(), 0.0;
 		hi(0) = HandlesPos(i, 0); hi(1) = HandlesPos(i, 1); hi(2) = 0;
-		Eigen::Vector3f p = igl::project(hi, (viewer->core->view * viewer->core->model).eval(), viewer->core->proj, viewer->core->viewport);
+		Eigen::Vector3f p = igl::project(hi, (viewer->core().view * viewer->core().model).eval(), viewer->core().proj, viewer->core().viewport);
 		float dist = (p - m).norm();
 
 		if (dist < viewer->data().point_size / 2.0 && dist < min)
@@ -316,8 +325,6 @@ bool SolverPlugin::key_up(int key, int modifiers)
 	return false;
 }
 
-
-
 bool SolverPlugin::mouse_down(int button, int modifier)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
@@ -343,7 +350,6 @@ bool SolverPlugin::mouse_down(int button, int modifier)
 	}
 	return false;
 }
-
 
 void SolverPlugin::AddHandle(int &vid)
 {
@@ -376,7 +382,6 @@ bool SolverPlugin::mouse_scroll(float delta_y)
 
 bool SolverPlugin::mouse_move(int mouse_x, int mouse_y)
 {
-
 	if (selectedHandle >= 0)
 		MoveHandle(mouse_x, mouse_y);
 
@@ -386,8 +391,8 @@ bool SolverPlugin::mouse_move(int mouse_x, int mouse_y)
 void SolverPlugin::MoveHandle(int mouse_x, int mouse_y)
 {
 	Vector3d mouse_pos, projected_pos;
-	mouse_pos << mouse_x, viewer->core->viewport[3] - mouse_y, 0.;
-	igl::unproject(mouse_pos, viewer->core->view * viewer->core->model, viewer->core->proj, viewer->core->viewport, projected_pos);
+	mouse_pos << mouse_x, viewer->core().viewport[3] - mouse_y, 0.;
+	igl::unproject(mouse_pos, viewer->core().view * viewer->core().model, viewer->core().proj, viewer->core().viewport, projected_pos);
 	
 	solver->wait_for_parameter_update_slot();
 	HandlesPos.row(selectedHandle) = projected_pos.head(2);
