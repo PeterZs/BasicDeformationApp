@@ -2,7 +2,12 @@
 
 #include "Solver.h"
 #include "EigenTypes.h"
-#include "PardisoSolver.h"
+
+#ifdef USE_PARDISO
+	#include "PardisoSolver.h"
+#else
+	#include "EigenSparseSolver.h"
+#endif
 
 #include <iostream>
 #include <Eigen/SparseCholesky>
@@ -21,7 +26,10 @@ public:
 private:
 	// norm of the progress on the mesh
 	double diff_norm;
-
-	unique_ptr<PardisoSolver<vector<int>, vector<double>>> pardiso = nullptr;
+	#ifdef USE_PARDISO
+		unique_ptr<PardisoSolver<vector<int>, vector<double>>> pardiso = nullptr;
+	#else
+		unique_ptr<EigenSparseSolver<vector<int>, vector<double>>> eigen_solver = nullptr;
+	#endif
 	long long int prevTime;
 };

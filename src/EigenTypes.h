@@ -5,6 +5,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <Eigen/SparseLU>
 #include <vector>
 
 // Dense matrices
@@ -31,6 +32,9 @@ typedef Eigen::Matrix<int, 4, 3> Mat43i;
 // Sparse matrices
 typedef Eigen::SparseMatrix<double> SpMat;
 typedef Eigen::SparseMatrix<int> SpMati;
+
+//Nave: sparse solvers
+typedef Eigen::SparseLU<SpMat,Eigen::COLAMDOrdering<int>>   SolverLU;
 
 // Column Vectors
 typedef Eigen::VectorXd Vec;
