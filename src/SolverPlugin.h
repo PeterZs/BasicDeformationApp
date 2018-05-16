@@ -10,6 +10,8 @@
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
 #include <imgui/imgui.h>
+//DontCareBear: ImGuizmo to the win!
+#include <ImGuizmo/ImGuizmo.h>
 #include <thread>
 
 #ifndef INT_INF

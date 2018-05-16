@@ -1,3 +1,6 @@
 [submodule "libigl"]
 	path = libigl
 	url = https://github.com/Roipo/libigl.git
+[submodule "ImGuizmo"]
+	path = ImGuizmo
+	url = https://github.com/dontcarebear/ImGuizmo

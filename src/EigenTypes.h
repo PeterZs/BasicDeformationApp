@@ -33,7 +33,7 @@ typedef Eigen::Matrix<int, 4, 3> Mat43i;
 typedef Eigen::SparseMatrix<double> SpMat;
 typedef Eigen::SparseMatrix<int> SpMati;
 
-//Nave: sparse solvers
+//DontCareBear: sparse solvers
 typedef Eigen::SparseLU<SpMat,Eigen::COLAMDOrdering<int>>   SolverLU;
 
 // Column Vectors
