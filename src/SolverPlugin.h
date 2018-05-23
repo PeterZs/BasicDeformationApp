@@ -10,9 +10,9 @@
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
 #include <imgui/imgui.h>
-//DontCareBear: ImGuizmo to the win!
 #include <ImGuizmo/ImGuizmo.h>
 #include <thread>
+#include "GizmoMenu.h"
 
 #ifndef INT_INF
 #define INT_INF numeric_limits<int>::max()
@@ -85,7 +85,8 @@ public:
 
 private:
 	// Pointer to the imgui
-	igl::opengl::glfw::imgui::ImGuiMenu menu;
+	/*igl::opengl::glfw::imgui::ImGuiMenu menu;*/
+	GizmoMenu menu;
 
 	// The 3d mesh
 	Eigen::MatrixX3d V;

@@ -45,6 +45,7 @@ bool EigenSparseSolver<vectorTypeI, vectorTypeS>::factorize(const vectorTypeI &I
 	A.resize(rows, cols);
 	A.setFromTriplets(tripletList.begin(), tripletList.end());
 	solver.factorize(A);
+	return false;
 }
 
 template <typename vectorTypeI, typename vectorTypeS>

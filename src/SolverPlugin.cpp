@@ -73,7 +73,7 @@ void SolverPlugin::init(Viewer *viewer)
 		if (ImGui::Button("Stop"))
 			stop_solver_thread();
 
-
+		menu.draw_custom_window();
 		ImGui::End();
 	};
 
