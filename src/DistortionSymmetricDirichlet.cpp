@@ -1,10 +1,7 @@
 #include "DistortionSymmetricDirichlet.h"
 #include <limits>
 
-typedef Eigen::Triplet<double> T;
-typedef Eigen::SparseMatrix<double> SpMat;
-typedef Eigen::Matrix<double, 6, 6> Matrix6d;
-typedef Eigen::Matrix<double, 6, 1> Vector6d;
+
 #include <igl/doublearea.h>
 
 //#include <chrono>
@@ -96,7 +93,7 @@ double DistortionSymmetricDirichlet::value()
 	double f = 0.5*(Area.asDiagonal()*Efi).sum();
 	return f;
 }
-void DistortionSymmetricDirichlet::gradient(Vec& g)
+void DistortionSymmetricDirichlet::gradient(VectorXd& g)
 {
 	UpdateSSVDFunction();
 	
@@ -182,7 +179,7 @@ bool DistortionSymmetricDirichlet::updateJ(const VectorXd& X)
 // 	d = D2*V;
 	for (int i = 0; i < F.rows(); i++)
 	{
-		Vec3 X1i, X2i;
+		Vector3d X1i, X2i;
 		X1i << x(F(i, 0), 0), x(F(i, 1), 0), x(F(i, 2), 0);
 		X2i << x(F(i, 0), 1), x(F(i, 1), 1), x(F(i, 2), 1);
 		a(i) = D1d.col(i).transpose()*X1i;
@@ -225,7 +222,7 @@ void DistortionSymmetricDirichlet::ComputeDenseSSVDDerivatives()
 	Dsd[1].bottomRows(t1.rows()) = t2;
 }
 
-inline Eigen::Matrix<double, 6, 6> DistortionSymmetricDirichlet::ComputeFaceConeHessian(const Eigen::Matrix<double, 6, 1> A1, const Eigen::Matrix<double, 6, 1>& A2, double a1x, double a2x)
+inline Matrix6d DistortionSymmetricDirichlet::ComputeFaceConeHessian(const Vector6d& A1, const Vector6d& A2, double a1x, double a2x)
 {
 	double f2 = a1x*a1x + a2x*a2x;
 	double invf = 1.0/sqrt(f2);
@@ -243,7 +240,7 @@ inline Eigen::Matrix<double, 6, 6> DistortionSymmetricDirichlet::ComputeFaceCone
 
 	return  (invf - invf3*a2) * A1A1t + (invf - invf3*b2) * A2A2t - invf3 * ab*(A1A2t + A2A1t);
 }
-inline Mat6 DistortionSymmetricDirichlet::ComputeConvexConcaveFaceHessian(const Vec6& a1, const Vec6& a2, const Vec6& b1, const Vec6& b2, double aY, double bY, double cY, double dY, const Vec6& dSi, const Vec6& dsi, double gradfS, double gradfs, double HS, double Hs)
+inline Matrix6d DistortionSymmetricDirichlet::ComputeConvexConcaveFaceHessian(const Vector6d& a1, const Vector6d& a2, const Vector6d& b1, const Vector6d& b2, double aY, double bY, double cY, double dY, const Vector6d& dSi, const Vector6d& dsi, double gradfS, double gradfs, double HS, double Hs)
 {
 	//no multiplying by area in this function
 
@@ -279,7 +276,7 @@ void DistortionSymmetricDirichlet::prepare_hessian()
 		// 		int lhbc = 3 * i; // left_half_base_col 
 		// 		int rhbc = 3 * i + n; // right_half_base_col 
 		//uhbr== fi(0)
-		Vec3i Fi = F.row(i);
+		Vector3i Fi = F.row(i);
 		// first column
 		PushPair(Fi(0), Fi(0));
 

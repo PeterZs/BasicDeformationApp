@@ -13,6 +13,8 @@
 #include <igl/opengl/ViewerData.h>
 #include <igl/unproject_onto_mesh.h>
 
+using namespace Eigen;
+
 SolverPlugin::SolverPlugin()
 	: solver(make_unique<Newton>()), totalObjective(make_shared<TotalObjective>()),
 	HandlesInd(totalObjective->constraintsPositional.ConstrainedVerticesInd),
@@ -150,7 +152,6 @@ void SolverPlugin::initialize()
 	// initialize the solver
 	VectorXd XX = Map<const VectorXd>(V.data(), V.rows() * 2);
 	solver->init(totalObjective, XX);
-// 	solver->init(totalObjective,XX+0.1*VectorXd::Random(6));
 	solver->setFlipAvoidingLineSearch(F);
 
 	if (processed_mesh_id != 0) {
@@ -163,18 +164,10 @@ void SolverPlugin::initialize()
 	}
 	viewer->data_list[source_mesh_id].set_mesh(V, F);
 	viewer->data_list[source_mesh_id].set_uv(V);
-	viewer->data_list[processed_mesh_id].set_mesh(V, F);
-
-	RGBColors = V;
-	RGBColors.rowwise() -= RGBColors.colwise().minCoeff();
-	RGBColors *= RGBColors.colwise().maxCoeff().cwiseInverse().asDiagonal();
-
-	viewer->data_list[processed_mesh_id].F;
+    viewer->data_list[source_mesh_id].set_colors(Eigen::MatrixX3d::Ones(F.rows(), 3));
+	
+    viewer->data_list[processed_mesh_id].set_mesh(V, F);
 	viewer->data_list[processed_mesh_id].set_colors(Eigen::MatrixX3d::Ones(F.rows(), 3));
-
-	// init colors of deformed mesh
-	uv_triangle_colors = Eigen::MatrixX3d::Ones(F.rows(), 3);
-	viewer->data_list[source_mesh_id].set_colors(RVec3(1., 1., 1.));
 }
 
 bool SolverPlugin::pre_draw()
@@ -186,12 +179,13 @@ bool SolverPlugin::pre_draw()
 
 void SolverPlugin::update_mesh()
 {
-	Eigen::VectorXd X;
+	VectorXd X;
 	solver->get_data(X);
 	MatrixX3d V(X.rows() / 2, 3);
 	V.leftCols(2) = Map<MatrixX2d>(X.data(), X.rows() / 2, 2);
 	V.rightCols(1).setZero();
-	viewer->data_list[processed_mesh_id].set_vertices(V);
+	
+    viewer->data_list[processed_mesh_id].set_vertices(V);
 
 	// set UV of 3d mesh with newX vertices
 	// prepare first for 3d mesh soup
@@ -207,16 +201,16 @@ void SolverPlugin::update_mesh()
 	// 	viewer->get_mesh(uv_id).dirty |= viewer->get_mesh(uv_id).DIRTY_NORMAL;
 
 	Eigen::MatrixX3d uv_sep_colors = Eigen::MatrixX3d::Ones(uv_triangle_colors.rows(), 3);
-	Vec vals = Vec::Zero(3 * F.rows());
+    VectorXd vals = VectorXd::Zero(3 * F.rows());
 
 
 	Eigen::MatrixX3d uv_dist_colors = Eigen::MatrixX3d::Ones(uv_triangle_colors.rows(), 3);
 	if (show_distortion_error)
 	{
-		Vec dist_vals = totalObjective->symDirichlet.Efi;
+        VectorXd dist_vals = totalObjective->symDirichlet.Efi;
 
 		// new dist color impl
-		Vec dist_err = dist_vals.transpose().array() - 4.;
+        VectorXd dist_err = dist_vals.transpose().array() - 4.;
 
 		// scale to [0, dist_cutoff]
 		dist_err = dist_err / *dist_color_clamp;

@@ -6,6 +6,12 @@
 #include <Eigen/Sparse>
 #include "ObjectiveFunction.h"
 
+using namespace Eigen;
+typedef Triplet<double> T;
+typedef SparseMatrix<double> SpMat;
+typedef Matrix<double, 6, 6> Matrix6d;
+typedef Matrix<double, 6, 1> Vector6d;
+
 class DistortionSymmetricDirichlet : public ObjectiveFunction
 {
 
@@ -34,21 +40,21 @@ public:
 	int numF;
 
 	//Jacobian of the parameterization per face
-	Eigen::VectorXd a;
-	Eigen::VectorXd b;
-	Eigen::VectorXd c;
-	Eigen::VectorXd d;
+	VectorXd a;
+	VectorXd b;
+	VectorXd c;
+	VectorXd d;
 	//Eigen::MatrixXd Juv;		//[a,b,c,d]
 	//Eigen::MatrixXd invJuv;	//the order and the signs isn't important because the energy is squared anyway thus will be [a,b,c,d]*1/(ad-bc)
-	Eigen::VectorXd detJuv;		//(ad-bc)
-	Eigen::VectorXd invdetJuv;	//1/(ad-bc)
-	Eigen::SparseMatrix<double> DdetJuv_DUV; //jacobian of the function (detJuv) by UV
+	VectorXd detJuv;		//(ad-bc)
+	VectorXd invdetJuv;	//1/(ad-bc)
+	SparseMatrix<double> DdetJuv_DUV; //jacobian of the function (detJuv) by UV
 
 	//singular values
-	Eigen::MatrixX2d s; //Singular values s[0]>s[1]
-	Eigen::MatrixX4d v; //Singular vectors 
-	Eigen::MatrixX4d u; //Singular vectors 
-	Eigen::MatrixXd Dsd[2]; //singular values dense derivatives s[0]>s[1]
+	MatrixX2d s; //Singular values s[0]>s[1]
+	MatrixX4d v; //Singular vectors 
+	MatrixX4d u; //Singular vectors 
+	MatrixXd Dsd[2]; //singular values dense derivatives s[0]>s[1]
 
 	//SVD methods
 	bool updateJ(const VectorXd& X);
@@ -56,9 +62,8 @@ public:
 	void ComputeDenseSSVDDerivatives();
 
 
-	//loop implementation
-	inline Eigen::Matrix<double, 6, 6> ComputeFaceConeHessian(const Eigen::Matrix<double,6,1> A1, const Eigen::Matrix<double, 6, 1>& A2, double a1x, double a2x);
-	inline Mat6 ComputeConvexConcaveFaceHessian( const Vec6& a1, const Vec6& a2, const Vec6& b1, const Vec6& b2, double aY, double bY, double cY, double dY, const Vec6& dSi, const Vec6& dsi, double gradfS, double gradfs, double HS, double Hs);
+	inline Matrix6d ComputeFaceConeHessian(const Vector6d& A1, const Vector6d& A2, double a1x, double a2x);
+	inline Matrix6d ComputeConvexConcaveFaceHessian(const Vector6d& a1, const Vector6d& a2, const Vector6d& b1, const Vector6d& b2, double aY, double bY, double cY, double dY, const Vector6d& dSi, const Vector6d& dsi, double gradfS, double gradfs, double HS, double Hs);
 
 	//Energy parts
 	//distortion

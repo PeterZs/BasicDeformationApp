@@ -87,7 +87,7 @@ private:
 
 	// The 3d mesh
 	Eigen::MatrixX3d V;
-	MatX3i F;
+	MatrixX3i F;
 
 	// Rotation matrices
 	Eigen::MatrixXd Rx, Ry;
@@ -96,8 +96,8 @@ private:
 	int hovered_triangle = -1, hovered_vertex = -1;
 	
 	Eigen::MatrixX3d mesh_pos_down, uv_mesh_pos_down;
-	RVec3 last_mouse_pos, projected_mouse_down, point_pos_down;
-	RVec3 point_pos;
+	Vector3d last_mouse_pos, projected_mouse_down, point_pos_down;
+    Vector3d point_pos;
 	bool move_point = false;
 	Eigen::MatrixX3d mesh_3d_normals_down;
 
@@ -121,7 +121,7 @@ private:
 	Eigen::MatrixX3d RGBColors;
 
 	//colors
-	RVec3 C, C_hover, white, red, C_merge, zero3, ones3, black;
+	Vector3d C, C_hover, white, red, C_merge, zero3, ones3, black;
 
 	int rightView;
 	int leftView;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "TotalObjective.h"
-#include "EigenTypes.h"
 
 #include <atomic>
 #include <functional>
@@ -33,7 +32,7 @@ public:
 	void release_parameter_update_slot();
 
 	// External (interface) and internal working mesh
-	Vec ext_x, X;
+	VectorXd ext_x, X;
 	MatrixX3i F;
 	int num_steps = 2147483647;
 

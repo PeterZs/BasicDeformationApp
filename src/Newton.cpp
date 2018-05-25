@@ -21,7 +21,7 @@ double Newton::step()
 		cout << err.what();
 		return -1;
 	}
-	Vec rhs = -g;
+	VectorXd rhs = -g;
 	pardiso->solve(rhs, p);
 #else
 	eigen_solver->factorize(objective->II, objective->JJ, objective->SS);

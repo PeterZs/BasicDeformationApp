@@ -2,7 +2,6 @@
 #define USE_PARDISO
 
 #include "Solver.h"
-#include "EigenTypes.h"
 
 #ifdef USE_PARDISO
 	#include "PardisoSolver.h"

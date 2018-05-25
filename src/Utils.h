@@ -3,7 +3,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "EigenTypes.h"
 
 #include <vector>
 #include <igl/local_basis.h>
@@ -31,7 +30,7 @@ public:
 		VectorXd Ar; igl::doublearea(V, F, Ar);
 		PermutationMatrix<3> perm;
 
-		Vec3i Pi;
+        Vector3i Pi;
 		Pi << 1, 2, 0;
 		PermutationMatrix<3> P = Eigen::PermutationMatrix<3>(Pi);
 
@@ -60,7 +59,6 @@ public:
 			Dx.row(i) = res.row(0);
 			Dy.row(i) = res.row(1);
 			Dz.row(i) = res.row(2);
-			//		igl::slice_into(res, R, C, grad3_3f);
 		}
 		D1 = F1.col(0).asDiagonal()*Dx + F1.col(1).asDiagonal()*Dy + F1.col(2).asDiagonal()*Dz;
 		D2 = F2.col(0).asDiagonal()*Dx + F2.col(1).asDiagonal()*Dy + F2.col(2).asDiagonal()*Dz;
