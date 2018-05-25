@@ -1,7 +1,6 @@
 #include "Newton.h"
 
 #include <chrono>
-
 Newton::Newton() {}
 
 double Newton::step()

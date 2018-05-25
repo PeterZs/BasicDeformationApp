@@ -1,4 +1,5 @@
 #pragma once
+#define USE_PARDISO
 
 #include "Solver.h"
 #include "EigenTypes.h"

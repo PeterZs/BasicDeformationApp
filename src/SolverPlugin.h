@@ -3,7 +3,6 @@
 #ifndef SOLVERPLUGIN_H
 #define SOLVERPLUGIN_H
 
-#include "EigenTypes.h"
 #include "Newton.h"
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/opengl/glfw/ViewerPlugin.h>
@@ -41,7 +40,8 @@ public:
 
 	void AddHandle(int &vid);
 	bool mouse_up(int button, int modifier);
-	bool mouse_scroll(float delta_y);
+    void shutdown();
+    bool mouse_scroll(float delta_y);
 	
 	bool pre_draw();
 	bool key_down(int key, int modifiers);

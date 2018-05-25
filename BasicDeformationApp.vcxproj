@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ConstraintsPositional.cpp" />
+    <ClCompile Include="src\EigenSparseSolver.cpp" />
     <ClCompile Include="src\TotalObjective.cpp" />
     <ClCompile Include="src\DistortionSymmetricDirichlet.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -31,7 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ConstraintsPositional.h" />
-    <ClInclude Include="src\EigenTypes.h" />
+    <ClInclude Include="src\EigenSparseSolver.h" />
     <ClInclude Include="src\TotalObjective.h" />
     <ClInclude Include="src\DistortionSymmetricDirichlet.h" />
     <ClInclude Include="src\Newton.h" />
@@ -39,7 +40,6 @@
     <ClInclude Include="src\PardisoSolver.h" />
     <ClInclude Include="src\Solver.h" />
     <ClInclude Include="src\SolverPlugin.h" />
-    <ClInclude Include="src\svg_exporter.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="src\eigen.natvis" />
@@ -148,7 +148,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>libigl\include;libigl\external\eigen;libigl\external\glad\include;libigl\external\glfw\include;libigl\external\imgui\.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>libigl\include;libigl\external\eigen;libigl\external\glad\include;libigl\external\glfw\include;libigl\external\imgui\.;ImGuizmo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>

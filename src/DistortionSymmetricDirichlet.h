@@ -1,6 +1,5 @@
 #pragma once
 
-#include "EigenTypes.h"
 #include "Utils.h"
 #include <functional>
 #include <Eigen/Core>

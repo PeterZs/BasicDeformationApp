@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Natvis Include="src\eigen.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\SolverPlugin.cpp" />
+    <ClCompile Include="src\TotalObjective.cpp">
+      <Filter>Objectives</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ObjectiveFunction.cpp">
+      <Filter>Objectives</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConstraintsPositional.cpp">
+      <Filter>Objectives</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DistortionSymmetricDirichlet.cpp">
+      <Filter>Objectives</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EigenSparseSolver.cpp">
+      <Filter>Solvers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Newton.cpp">
+      <Filter>Solvers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PardisoSolver.cpp">
+      <Filter>Solvers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Solver.cpp">
+      <Filter>Solvers</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\SolverPlugin.h" />
+    <ClInclude Include="src\TotalObjective.h">
+      <Filter>Objectives</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ObjectiveFunction.h">
+      <Filter>Objectives</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ConstraintsPositional.h">
+      <Filter>Objectives</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DistortionSymmetricDirichlet.h">
+      <Filter>Objectives</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EigenSparseSolver.h">
+      <Filter>Solvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Newton.h">
+      <Filter>Solvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PardisoSolver.h">
+      <Filter>Solvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Solver.h">
+      <Filter>Solvers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Solvers">
+      <UniqueIdentifier>{2b4256b2-7ed4-49e7-9bc3-89b56af388a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objectives">
+      <UniqueIdentifier>{dd86d547-9ada-41ab-8f8a-d951da4b7ea2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,7 +1,5 @@
 #include "SolverPlugin.h"
 
-#include "svg_exporter.h"
-
 #include <queue>
 #include <deque>
 #include <array>
@@ -32,14 +30,14 @@ SolverPlugin::SolverPlugin()
 
 void SolverPlugin::init(Viewer *viewer)
 {
-	leftView = 0;
+	leftView = viewer->core().id;
 	viewer->core().background_color << 1., 1., 1., 1.; // 0.25, 0.25, 0.25, 1.0;
 	viewer->core().orthographic = true;
 	viewer->core().viewport = Eigen::Vector4f(0, 0, 960, 1080);
 	viewer->core().rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
 	
 	rightView = viewer->append_core(Eigen::Vector4f(960, 0, 960, 1080));
-	viewer->core_list[rightView].rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
+	viewer->core(rightView).rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
 
 
 	this->viewer = viewer;
@@ -123,10 +121,10 @@ bool SolverPlugin::load(string filename)
 	}
 
 	initialize();
-	viewer->coreDataPairs.clear();
-	viewer->coreDataPairs.insert({ 0,1 });
-	viewer->coreDataPairs.insert({ 1,0 });
-	viewer->selected_data_index = 0;
+    viewer->data(source_mesh_id).set_visible(false, leftView);
+    viewer->data(processed_mesh_id).set_visible(false, rightView);
+
+
 	mesh_loaded = true;	
 	mesh_filename = filename;
 
@@ -375,6 +373,10 @@ bool SolverPlugin::mouse_up(int button, int modifier)
 	return true;
 }
 
+void SolverPlugin::shutdown()
+{
+    stop_solver_thread();
+}
 bool SolverPlugin::mouse_scroll(float delta_y)
 {
 	return false;
@@ -394,9 +396,9 @@ void SolverPlugin::MoveHandle(int mouse_x, int mouse_y)
 	mouse_pos << mouse_x, viewer->core().viewport[3] - mouse_y, 0.;
 	igl::unproject(mouse_pos, viewer->core().view * viewer->core().model, viewer->core().proj, viewer->core().viewport, projected_pos);
 	
-	solver->wait_for_parameter_update_slot();
+// 	solver->wait_for_parameter_update_slot();
 	HandlesPos.row(selectedHandle) = projected_pos.head(2);
-	solver->release_parameter_update_slot();
+// 	solver->release_parameter_update_slot();
 }
 
 bool SolverPlugin::process_mouse_move()
