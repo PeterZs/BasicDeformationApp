@@ -28,7 +28,7 @@ public:
 	bool load(string filename);
 	void export_uv_to_obj();
 // 	void add_texture_slider(nanogui::Window* window, double& var, const string& name);
-	void initialize();
+	void initializeSolver();
 	
 	bool mouse_move(int mouse_x, int mouse_y);
 	void MoveHandle(int mouse_x, int mouse_y);

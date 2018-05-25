@@ -122,7 +122,22 @@ bool SolverPlugin::load(string filename)
 		return false;
 	}
 
-	initialize();
+	initializeSolver();
+
+    if (processed_mesh_id != 0) {
+        viewer->data_list[processed_mesh_id].clear();
+        viewer->data_list[source_mesh_id].clear();
+    }
+    else
+    {
+        processed_mesh_id = viewer->append_mesh();
+    }
+    viewer->data_list[source_mesh_id].set_mesh(V, F);
+    viewer->data_list[source_mesh_id].set_uv(V);
+    viewer->data_list[source_mesh_id].set_colors(Eigen::MatrixX3d::Ones(F.rows(), 3));
+
+    viewer->data_list[processed_mesh_id].set_mesh(V, F);
+    viewer->data_list[processed_mesh_id].set_colors(Eigen::MatrixX3d::Ones(F.rows(), 3));
     viewer->data(source_mesh_id).set_visible(false, leftView);
     viewer->data(processed_mesh_id).set_visible(false, rightView);
 
@@ -133,7 +148,7 @@ bool SolverPlugin::load(string filename)
 	return true;
 }
 
-void SolverPlugin::initialize()
+void SolverPlugin::initializeSolver()
 {
 	if (solver->is_running)
 		solver->stop();
@@ -153,21 +168,7 @@ void SolverPlugin::initialize()
 	VectorXd XX = Map<const VectorXd>(V.data(), V.rows() * 2);
 	solver->init(totalObjective, XX);
 	solver->setFlipAvoidingLineSearch(F);
-
-	if (processed_mesh_id != 0) {
-		viewer->data_list[processed_mesh_id].clear();
-		viewer->data_list[source_mesh_id].clear();
-	}
-	else
-	{
-		processed_mesh_id = viewer->append_mesh();
-	}
-	viewer->data_list[source_mesh_id].set_mesh(V, F);
-	viewer->data_list[source_mesh_id].set_uv(V);
-    viewer->data_list[source_mesh_id].set_colors(Eigen::MatrixX3d::Ones(F.rows(), 3));
-	
-    viewer->data_list[processed_mesh_id].set_mesh(V, F);
-	viewer->data_list[processed_mesh_id].set_colors(Eigen::MatrixX3d::Ones(F.rows(), 3));
+    start_solver_thread();
 }
 
 bool SolverPlugin::pre_draw()
@@ -268,8 +269,9 @@ int SolverPlugin::FindHitVertex()
 	// Cast a ray in the view direction starting from the mouse position
 	double x = viewer->current_mouse_x;
 	double y = viewer->core().viewport(3) - viewer->current_mouse_y;
-	igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view * viewer->core().model,
-		viewer->core().proj, viewer->core().viewport, V, F, fid, BC);
+	if(!igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view * viewer->core().model,
+		viewer->core().proj, viewer->core().viewport, V, F, fid, BC))
+        return -1;
 	int maxBCind;
 	double maxBc = BC.maxCoeff(&maxBCind);
 	return F(fid, maxBCind);
