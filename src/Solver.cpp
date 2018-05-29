@@ -88,7 +88,6 @@ void Solver::linesearch()
 	}
 }
 
-
 void Solver::stop()
 {
 	wait_for_parameter_update_slot();

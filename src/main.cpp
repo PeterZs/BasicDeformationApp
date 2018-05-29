@@ -6,7 +6,6 @@
 #include "TotalObjective.h"
 
 using namespace std;
-using namespace igl::opengl::glfw;
 
 int main(int argc, char** argv)
 {
@@ -16,7 +15,6 @@ int main(int argc, char** argv)
 	Viewer viewer;
 
 	SolverPlugin solverPlugin;
-//	viewer.core.rotation_type = viewer::ViewerCore::ROTATION_TYPE_TRACKBALL;
 	viewer.plugins.push_back(&solverPlugin);
 
 	// start viewer

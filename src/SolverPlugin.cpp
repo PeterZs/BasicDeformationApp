@@ -18,16 +18,9 @@ using namespace Eigen;
 SolverPlugin::SolverPlugin()
 	: solver(make_unique<Newton>()), totalObjective(make_shared<TotalObjective>()),
 	HandlesInd(totalObjective->constraintsPositional.ConstrainedVerticesInd),
-	HandlesPos(totalObjective->constraintsPositional.ConstrainedVerticesPos)
+	HandlesPosDeformed(totalObjective->constraintsPositional.ConstrainedVerticesPos)
 {
-	C << 0.0, 1.0, 0.0;
-	C_hover << 0.854902, 0.647059, 0.12549;
-	white << 0.7, 0.7, .4;
-	red << 1.0, 0.0, 0.0;
-	C_merge << 51. / 255., 204. / 255., 1.0;
-	zero3 << 0., 0., 0.;
-	ones3 << 1., 1., 1.;
-	black << 0., 0., 0.;
+
 }
 
 void SolverPlugin::init(Viewer *viewer)
@@ -37,10 +30,8 @@ void SolverPlugin::init(Viewer *viewer)
 	viewer->core().orthographic = true;
 	viewer->core().viewport = Eigen::Vector4f(0, 0, 960, 1080);
 	viewer->core().rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
-	
 	rightView = viewer->append_core(Eigen::Vector4f(960, 0, 960, 1080));
 	viewer->core(rightView).rotation_type = igl::opengl::ViewerCore::ROTATION_TYPE_NO_ROTATION;
-
 
 	this->viewer = viewer;
 	viewer->plugins.push_back(&menu);
@@ -86,8 +77,8 @@ void SolverPlugin::post_resize(int w, int h)
 {
 	if (viewer)
 	{
-		viewer->core_list[leftView].viewport = Eigen::Vector4f(0, 0, w / 2, h);
-		viewer->core_list[rightView].viewport = Eigen::Vector4f(w / 2 + 1, 0, w / 2, h);
+		viewer->core(leftView).viewport = Eigen::Vector4f(0, 0, w / 2, h);
+		viewer->core(rightView).viewport = Eigen::Vector4f(w / 2 + 1, 0, w / 2, h);
 	}
 }
 
@@ -139,8 +130,10 @@ bool SolverPlugin::load(string filename)
     viewer->data_list[processed_mesh_id].set_mesh(V, F);
     viewer->data_list[processed_mesh_id].set_colors(Eigen::MatrixX3d::Ones(F.rows(), 3));
     viewer->data(source_mesh_id).set_visible(false, leftView);
-    viewer->data(processed_mesh_id).set_visible(false, rightView);
+    viewer->data(source_mesh_id).point_size = 10;
 
+    viewer->data(processed_mesh_id).set_visible(false, rightView);
+    viewer->data(processed_mesh_id).point_size = 10;
 
 	mesh_loaded = true;	
 	mesh_filename = filename;
@@ -225,9 +218,19 @@ void SolverPlugin::update_mesh()
 
 	uv_triangle_colors.array() *= uv_dist_colors.array();
 
+
+
+    viewer->data_list[source_mesh_id].points.resize(HandlesInd.size(), 6);
+    viewer->data_list[source_mesh_id].points.setZero();
+    viewer->data_list[source_mesh_id].points.leftCols(2) = HandlesPosSource;
+    viewer->data_list[source_mesh_id].points.col(2).setConstant(1);
+    viewer->data_list[source_mesh_id].points.col(5).setConstant(1);
+    viewer->data_list[source_mesh_id].dirty |= igl::opengl::MeshGL::DIRTY_OVERLAY_POINTS;
+
+
 	viewer->data_list[processed_mesh_id].points.resize(HandlesInd.size(), 6);
 	viewer->data_list[processed_mesh_id].points.setZero();
-	viewer->data_list[processed_mesh_id].points.leftCols(2) = HandlesPos;
+	viewer->data_list[processed_mesh_id].points.leftCols(2) = HandlesPosDeformed;
 	viewer->data_list[processed_mesh_id].points.col(2).setConstant(1);
 	viewer->data_list[processed_mesh_id].points.col(5).setConstant(1);
 	viewer->data_list[processed_mesh_id].dirty |= igl::opengl::MeshGL::DIRTY_OVERLAY_POINTS;
@@ -262,8 +265,18 @@ void SolverPlugin::stop_solver_thread()
 
 int SolverPlugin::FindHitVertex()
 {
-	auto &V = viewer->data_list[processed_mesh_id].V;
-	auto &F = viewer->data_list[processed_mesh_id].F;
+    MatrixX3d V; MatrixX3i F;
+    bool leftViewChosen = viewer->selected_core_index == viewer->core_index(leftView);
+    if (leftViewChosen)
+    {
+        V = viewer->data_list[processed_mesh_id].V;
+        F = viewer->data_list[processed_mesh_id].F;
+    }
+    else
+    {
+        V = viewer->data_list[source_mesh_id].V;
+        F = viewer->data_list[source_mesh_id].F;
+    }
 	int fid;
 	Eigen::Vector3f BC;
 	// Cast a ray in the view direction starting from the mouse position
@@ -272,6 +285,10 @@ int SolverPlugin::FindHitVertex()
 	if(!igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view * viewer->core().model,
 		viewer->core().proj, viewer->core().viewport, V, F, fid, BC))
         return -1;
+    if (leftViewChosen)
+        viewer->selected_data_index = viewer->mesh_index(processed_mesh_id);
+    else
+        viewer->selected_data_index = viewer->mesh_index(source_mesh_id);
 	int maxBCind;
 	double maxBc = BC.maxCoeff(&maxBCind);
 	return F(fid, maxBCind);
@@ -289,7 +306,7 @@ int SolverPlugin::FindHitHandle()
 	{
 		Vector3f hi;
 		// << HandlesPos.row(i).cast<float>(), 0.0;
-		hi(0) = HandlesPos(i, 0); hi(1) = HandlesPos(i, 1); hi(2) = 0;
+		hi(0) = HandlesPosDeformed(i, 0); hi(1) = HandlesPosDeformed(i, 1); hi(2) = 0;
 		Eigen::Vector3f p = igl::project(hi, (viewer->core().view * viewer->core().model).eval(), viewer->core().proj, viewer->core().viewport);
 		float dist = (p - m).norm();
 
@@ -323,11 +340,9 @@ bool SolverPlugin::mouse_down(int button, int modifier)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
-
-		// start selecting a set of vertices for new handle
+        int vid = FindHitVertex();
 		if (modifier == GLFW_MOD_CONTROL)
 		{
-			int vid = FindHitVertex();
 			if (vid >= 0)
 				AddHandle(vid);
 		}
@@ -338,7 +353,8 @@ bool SolverPlugin::mouse_down(int button, int modifier)
 				RemoveHandle(index);
 		}
 		else
-			selectedHandle = FindHitHandle();
+            if (viewer->selected_core_index == viewer->core_index(leftView))
+			    selectedHandle = FindHitHandle();
 
 		return true; // disable trackball rotation
 	}
@@ -347,10 +363,20 @@ bool SolverPlugin::mouse_down(int button, int modifier)
 
 void SolverPlugin::AddHandle(int &vid)
 {
+    int mesh_id;
+    if (viewer->selected_core_index == viewer->core_index(leftView))
+        mesh_id = processed_mesh_id;
+    else
+        mesh_id = source_mesh_id;
+
 	solver->wait_for_parameter_update_slot();
 	HandlesInd.push_back(vid);
-	HandlesPos.conservativeResize(HandlesPos.rows() + 1, NoChange);
-	HandlesPos.bottomRows(1) = viewer->data_list[processed_mesh_id].V.row(vid).leftCols(2);
+	HandlesPosDeformed.conservativeResize(HandlesPosDeformed.rows() + 1, NoChange);
+	HandlesPosDeformed.bottomRows(1) = viewer->data_list[processed_mesh_id].V.row(vid).leftCols(2);
+
+    HandlesPosSource.conservativeResize(HandlesPosSource.rows() + 1, NoChange);
+    HandlesPosSource.bottomRows(1) = viewer->data_list[source_mesh_id].V.row(vid).leftCols(2);
+
 	solver->release_parameter_update_slot();
 }
 
@@ -358,8 +384,12 @@ void SolverPlugin::RemoveHandle(int index)
 {
 	solver->wait_for_parameter_update_slot();
 	HandlesInd.erase(HandlesInd.begin() + index);
-	HandlesPos.block(index, 0, HandlesPos.rows() - index - 1, 2) = HandlesPos.block(index + 1, 0, HandlesPos.rows() - index - 1, 2);
-	HandlesPos.conservativeResize(HandlesPos.rows() - 1, 2);
+	HandlesPosDeformed.block(index, 0, HandlesPosDeformed.rows() - index - 1, 2) = HandlesPosDeformed.block(index + 1, 0, HandlesPosDeformed.rows() - index - 1, 2);
+	HandlesPosDeformed.conservativeResize(HandlesPosDeformed.rows() - 1, 2);
+
+    HandlesPosSource.block(index, 0, HandlesPosSource.rows() - index - 1, 2) = HandlesPosSource.block(index + 1, 0, HandlesPosSource.rows() - index - 1, 2);
+    HandlesPosSource.conservativeResize(HandlesPosSource.rows() - 1, 2);
+
 	solver->release_parameter_update_slot();
 }
 
@@ -373,6 +403,7 @@ void SolverPlugin::shutdown()
 {
     stop_solver_thread();
 }
+
 bool SolverPlugin::mouse_scroll(float delta_y)
 {
 	return false;
@@ -393,7 +424,7 @@ void SolverPlugin::MoveHandle(int mouse_x, int mouse_y)
 	igl::unproject(mouse_pos, viewer->core().view * viewer->core().model, viewer->core().proj, viewer->core().viewport, projected_pos);
 	
 // 	solver->wait_for_parameter_update_slot();
-	HandlesPos.row(selectedHandle) = projected_pos.head(2);
+	HandlesPosDeformed.row(selectedHandle) = projected_pos.head(2);
 // 	solver->release_parameter_update_slot();
 }
 

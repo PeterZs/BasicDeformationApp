@@ -120,16 +120,14 @@ private:
 	bool colorByRGB=false;
 	Eigen::MatrixX3d RGBColors;
 
-	//colors
-	Vector3d C, C_hover, white, red, C_merge, zero3, ones3, black;
-
 	int rightView;
 	int leftView;
 	int FindHitVertex();
 	int FindHitHandle();
 	int selectedHandle=-1;
 	std::vector<int>& HandlesInd; //reference to indices in constraitPositional
-	MatrixX2d& HandlesPos; //reference to positions in constraitPositional
+	MatrixX2d& HandlesPosDeformed; //reference to positions in constraitPositional
+    MatrixX2d HandlesPosSource; //Handles Positions in source Mesh
 };
 
 #endif
